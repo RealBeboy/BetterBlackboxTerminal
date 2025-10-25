@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackbox Terminal</title>
+    <title>Blackbox Terminal - Made by Beboy</title>
     <style>
         :root {
             --color-white: rgba(255, 255, 255, 1);
@@ -306,13 +306,13 @@
     <div class="container">
         <div class="setup-form" id="setupForm">
             <h2>🚀 Blackbox Terminal Connection</h2>
+            <p style="color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-16);">Made by Beboy</p>
             <div class="form-group">
                 <label for="sandboxId">Sandbox ID</label>
                 <input 
                     type="text" 
                     id="sandboxId" 
                     placeholder="sbx_..."
-                    value=""
                 />
             </div>
             <div class="form-group">
@@ -322,7 +322,6 @@
                         type="text" 
                         id="terminalId" 
                         placeholder="cmd_..."
-                        value=""
                         style="flex: 1;"
                     />
                     <button class="btn" id="generateTerminalBtn" style="flex-shrink: 0;">Generate New</button>
@@ -342,7 +341,7 @@
                     <div class="dot green"></div>
                 </div>
                 <div class="terminal-title">
-                    <span>Blackbox Terminal</span>
+                    <span>Blackbox Terminal - Made by Beboy</span>
                     <span id="currentDir">~</span>
                 </div>
             </div>
@@ -607,6 +606,7 @@
             printWelcome() {
                 const welcome = `┌─────────────────────────────────────────────────────────────────┐
 │              Welcome to Blackbox SSH Terminal                   │
+│                        Made by Beboy                            │
 │─────────────────────────────────────────────────────────────────│
 │ Sandbox:  ${this.sandboxId.padEnd(47)}│
 │ Terminal: ${this.terminalId.padEnd(47)}│
@@ -747,7 +747,7 @@ All other commands are executed in the remote sandbox.
             updatePrompt() {
                 const dir = this.currentDirectory === '.' ? '~' : this.currentDirectory;
                 this.currentDirDisplay.textContent = dir;
-                const username = 'user';
+                const username = 'beboy';
                 const hostname = 'blackbox';
                 this.inputPrompt.textContent = `${username}@${hostname}:${dir}$ `;
             }
