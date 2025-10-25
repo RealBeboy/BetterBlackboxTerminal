@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackbox Terminal</title>
+    <style>
+        :root {
+            --color-white: rgba(255, 255, 255, 1);
+            --color-black: rgba(0, 0, 0, 1);
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-gray-200: rgba(245, 245, 245, 1);
+            --color-gray-300: rgba(167, 169, 169, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-charcoal-700: rgba(31, 33, 33, 1);
+            --color-charcoal-800: rgba(38, 40, 40, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-teal-300: rgba(50, 184, 198, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-red-400: rgba(255, 84, 89, 1);
+            --color-red-500: rgba(192, 21, 47, 1);
+            --color-orange-400: rgba(230, 129, 97, 1);
+            --color-green-400: rgba(74, 222, 128, 1);
+
+            --color-gray-400-rgb: 119, 124, 124;
+            --color-teal-300-rgb: 50, 184, 198;
+            --color-gray-300-rgb: 167, 169, 169;
+
+            --color-background: var(--color-charcoal-700);
+            --color-surface: var(--color-charcoal-800);
+            --color-text: var(--color-gray-200);
+            --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
+            --color-primary: var(--color-teal-300);
+            --color-primary-hover: var(--color-teal-500);
+            --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+            --color-error: var(--color-red-400);
+            --color-success: var(--color-green-400);
+            --color-warning: var(--color-orange-400);
+
+            --font-family-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --font-size-sm: 12px;
+            --font-size-base: 14px;
+            --font-size-lg: 16px;
+            --space-8: 8px;
+            --space-12: 12px;
+            --space-16: 16px;
+            --space-20: 20px;
+            --radius-base: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-base);
+            background: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.5;
+            padding: var(--space-20);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .setup-form {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-20);
+            margin-bottom: var(--space-20);
+        }
+
+        .setup-form h2 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-16);
+            color: var(--color-primary);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-16);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-8);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: var(--space-12);
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-base);
+            color: var(--color-text);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-sm);
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .btn {
+            padding: var(--space-12) var(--space-20);
+            background: var(--color-primary);
+            color: var(--color-charcoal-800);
+            border: none;
+            border-radius: var(--radius-base);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-disconnect {
+            background: var(--color-error);
+            color: var(--color-white);
+            margin-left: var(--space-12);
+        }
+
+        .btn-disconnect:hover {
+            background: var(--color-red-500);
+        }
+
+        .status {
+            padding: var(--space-8) var(--space-12);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-sm);
+            margin-top: var(--space-12);
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            display: block;
+        }
+
+        .status.error {
+            background: rgba(255, 84, 89, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(255, 84, 89, 0.3);
+            display: block;
+        }
+
+        .terminal-window {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: none;
+        }
+
+        .terminal-window.active {
+            display: block;
+        }
+
+        .terminal-header {
+            background: #1a1a1a;
+            padding: var(--space-12) var(--space-16);
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .terminal-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-8);
+            font-size: var(--font-size-sm);
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: var(--space-8);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: var(--color-error); }
+        .dot.orange { background: var(--color-warning); }
+        .dot.green { background: var(--color-success); }
+
+        .terminal-body {
+            padding: var(--space-16);
+            height: 600px;
+            overflow-y: auto;
+            font-size: var(--font-size-base);
+            background: #0c0c0c;
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal-output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: var(--space-12);
+        }
+
+        .terminal-line {
+            margin-bottom: var(--space-8);
+        }
+
+        .terminal-prompt {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .terminal-command {
+            color: #ffffff;
+        }
+
+        .terminal-result {
+            color: #c0c0c0;
+            margin-left: 0;
+        }
+
+        .terminal-error {
+            color: #ff5555;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            gap: var(--space-8);
+            padding-top: var(--space-8);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .terminal-input-prompt {
+            color: #00ff00;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-size-base);
+            outline: none;
+            padding: var(--space-8) 0;
+            caret-color: #00ff00;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            color: var(--color-warning);
+        }
+
+        /* Scrollbar styling */
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: var(--color-surface);
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(var(--color-gray-400-rgb), 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="setup-form" id="setupForm">
+            <h2>🚀 Blackbox Terminal Connection</h2>
+            <div class="form-group">
+                <label for="sandboxId">Sandbox ID</label>
+                <input 
+                    type="text" 
+                    id="sandboxId" 
+                    placeholder="sbx_..."
+                    value=""
+                />
+            </div>
+            <div class="form-group">
+                <label for="terminalId">Terminal ID</label>
+                <div style="display: flex; gap: 8px;">
+                    <input 
+                        type="text" 
+                        id="terminalId" 
+                        placeholder="cmd_..."
+                        value=""
+                        style="flex: 1;"
+                    />
+                    <button class="btn" id="generateTerminalBtn" style="flex-shrink: 0;">Generate New</button>
+                    <button class="btn btn-disconnect" id="deleteTerminalBtn" style="flex-shrink: 0;">Delete</button>
+                </div>
+            </div>
+            <button class="btn" id="connectBtn">Connect</button>
+            <button class="btn btn-disconnect hidden" id="disconnectBtn">Disconnect</button>
+            <div class="status" id="statusMessage"></div>
+        </div>
+
+        <div class="terminal-window" id="terminalWindow">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <div class="dot red"></div>
+                    <div class="dot orange"></div>
+                    <div class="dot green"></div>
+                </div>
+                <div class="terminal-title">
+                    <span>Blackbox Terminal</span>
+                    <span id="currentDir">~</span>
+                </div>
+            </div>
+            <div class="terminal-body" id="terminalBody">
+                <div class="terminal-output" id="terminalOutput"></div>
+                <div class="terminal-input-line">
+                    <span class="terminal-input-prompt" id="inputPrompt">$ </span>
+                    <input 
+                        type="text" 
+                        class="terminal-input" 
+                        id="terminalInput"
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BlackboxTerminal {
+            constructor() {
+                this.apiUrl = 'https://build.blackbox.ai/api/terminals/execute';
+                this.sandboxId = null;
+                this.terminalId = null;
+                this.currentDirectory = '.';
+                this.commandHistory = [];
+                this.historyIndex = -1;
+                this.isExecuting = false;
+                
+                this.setupElements();
+                this.attachEventListeners();
+            }
+
+            setupElements() {
+                this.setupForm = document.getElementById('setupForm');
+                this.terminalWindow = document.getElementById('terminalWindow');
+                this.terminalOutput = document.getElementById('terminalOutput');
+                this.terminalInput = document.getElementById('terminalInput');
+                this.inputPrompt = document.getElementById('inputPrompt');
+                this.currentDirDisplay = document.getElementById('currentDir');
+                this.statusMessage = document.getElementById('statusMessage');
+                this.connectBtn = document.getElementById('connectBtn');
+                this.disconnectBtn = document.getElementById('disconnectBtn');
+                this.sandboxIdInput = document.getElementById('sandboxId');
+                this.terminalIdInput = document.getElementById('terminalId');
+            }
+
+            attachEventListeners() {
+                this.connectBtn.addEventListener('click', () => this.connect());
+                this.disconnectBtn.addEventListener('click', () => this.disconnect());
+                document.getElementById('generateTerminalBtn').addEventListener('click', () => this.generateTerminal());
+                document.getElementById('deleteTerminalBtn').addEventListener('click', () => this.deleteTerminal());
+                
+                this.terminalInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.executeCommand(this.terminalInput.value);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        this.navigateHistory(-1);
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        this.navigateHistory(1);
+                    }
+                });
+
+                // Focus input when clicking terminal body
+                document.getElementById('terminalBody').addEventListener('click', () => {
+                    this.terminalInput.focus();
+                });
+            }
+
+            async connect() {
+                const sandboxId = this.sandboxIdInput.value.trim();
+                const terminalId = this.terminalIdInput.value.trim();
+
+                if (!sandboxId || !terminalId) {
+                    this.showStatus('Please enter both Sandbox ID and Terminal ID', 'error');
+                    return;
+                }
+
+                this.sandboxId = sandboxId;
+                this.terminalId = terminalId;
+
+                this.connectBtn.disabled = true;
+                this.showStatus('Validating connection...', 'success');
+
+                // Test connection with a simple command
+                const result = await this.sendCommand('pwd');
+
+                if (result.success) {
+                    this.showStatus('✓ Connected successfully!', 'success');
+                    this.setupForm.style.display = 'none';
+                    this.terminalWindow.classList.add('active');
+                    this.disconnectBtn.classList.remove('hidden');
+                    
+                    this.printWelcome();
+                    this.terminalInput.focus();
+                } else {
+                    this.showStatus(`✗ Connection failed: ${result.error}`, 'error');
+                    this.connectBtn.disabled = false;
+                }
+            }
+
+            disconnect() {
+                this.setupForm.style.display = 'block';
+                this.terminalWindow.classList.remove('active');
+                this.disconnectBtn.classList.add('hidden');
+                this.connectBtn.disabled = false;
+                this.terminalOutput.innerHTML = '';
+                this.showStatus('Disconnected', 'success');
+            }
+
+            async generateTerminal() {
+                const sandboxId = this.sandboxIdInput.value.trim();
+
+                if (!sandboxId) {
+                    this.showStatus('Please enter Sandbox ID first', 'error');
+                    return;
+                }
+
+                const generateBtn = document.getElementById('generateTerminalBtn');
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Generating...';
+                this.showStatus('Creating new terminal...', 'success');
+
+                const payload = {
+                    sandboxId: sandboxId,
+                    name: 'terminal_' + Date.now()
+                };
+
+                try {
+                    let response;
+                    const createUrl = 'https://build.blackbox.ai/api/terminals/create';
+                    
+                    try {
+                        response = await fetch(createUrl, {
+                            method: 'POST',
+                            headers: {
+                                'accept': '*/*',
+                                'accept-language': 'en-US,en;q=0.6',
+                                'content-type': 'application/json',
+                                'sec-fetch-dest': 'empty',
+                                'sec-fetch-mode': 'cors',
+                                'sec-fetch-site': 'same-origin',
+                            },
+                            body: JSON.stringify(payload),
+                            mode: 'cors',
+                            credentials: 'include'
+                        });
+                    } catch (corsError) {
+                        // Try with CORS proxy
+                        response = await fetch(this.getCorsProxyUrl(createUrl), {
+                            method: 'POST',
+                            headers: {
+                                'accept': '*/*',
+                                'content-type': 'application/json',
+                            },
+                            body: JSON.stringify(payload),
+                        });
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success && result.terminal) {
+                        this.terminalIdInput.value = result.terminal.terminalId;
+                        this.showStatus(`✓ Terminal created: ${result.terminal.terminalId}`, 'success');
+                    } else {
+                        throw new Error('Failed to create terminal');
+                    }
+                } catch (error) {
+                    this.showStatus(`✗ Failed to generate terminal: ${error.message}`, 'error');
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate New';
+                }
+            }
+
+            async deleteTerminal() {
+                const sandboxId = this.sandboxIdInput.value.trim();
+                const terminalId = this.terminalIdInput.value.trim();
+
+                if (!sandboxId || !terminalId) {
+                    this.showStatus('Please enter both Sandbox ID and Terminal ID', 'error');
+                    return;
+                }
+
+                if (!confirm(`Are you sure you want to delete terminal ${terminalId}?`)) {
+                    return;
+                }
+
+                const deleteBtn = document.getElementById('deleteTerminalBtn');
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = 'Deleting...';
+                this.showStatus('Deleting terminal...', 'success');
+
+                const payload = {
+                    sandboxId: sandboxId,
+                    terminalId: terminalId
+                };
+
+                try {
+                    let response;
+                    const deleteUrl = 'https://build.blackbox.ai/api/terminals/delete';
+                    
+                    try {
+                        response = await fetch(deleteUrl, {
+                            method: 'DELETE',
+                            headers: {
+                                'accept': '*/*',
+                                'accept-language': 'en-US,en;q=0.6',
+                                'content-type': 'application/json',
+                                'sec-fetch-dest': 'empty',
+                                'sec-fetch-mode': 'cors',
+                                'sec-fetch-site': 'same-origin',
+                            },
+                            body: JSON.stringify(payload),
+                            mode: 'cors',
+                            credentials: 'include'
+                        });
+                    } catch (corsError) {
+                        // Try with CORS proxy
+                        response = await fetch(this.getCorsProxyUrl(deleteUrl), {
+                            method: 'DELETE',
+                            headers: {
+                                'accept': '*/*',
+                                'content-type': 'application/json',
+                            },
+                            body: JSON.stringify(payload),
+                        });
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.terminalIdInput.value = '';
+                        this.showStatus(`✓ Terminal deleted successfully`, 'success');
+                    } else {
+                        throw new Error('Failed to delete terminal');
+                    }
+                } catch (error) {
+                    this.showStatus(`✗ Failed to delete terminal: ${error.message}`, 'error');
+                } finally {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete';
+                }
+            }
+
+            getCorsProxyUrl(url) {
+                // Use a CORS proxy to bypass browser CORS restrictions
+                return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            }
+
+            printWelcome() {
+                const welcome = `┌─────────────────────────────────────────────────────────────────┐
+│              Welcome to Blackbox SSH Terminal                   │
+│─────────────────────────────────────────────────────────────────│
+│ Sandbox:  ${this.sandboxId.padEnd(47)}│
+│ Terminal: ${this.terminalId.padEnd(47)}│
+│─────────────────────────────────────────────────────────────────│
+│ Type 'help' for commands | 'clear' to clear | 'exit' to logout │
+└─────────────────────────────────────────────────────────────────┘
+
+`;
+                this.appendOutput(welcome, 'terminal-result');
+            }
+
+            async sendCommand(command) {
+                const payload = {
+                    sandboxId: this.sandboxId,
+                    terminalId: this.terminalId,
+                    command: command,
+                    workingDirectory: this.currentDirectory
+                };
+
+                try {
+                    // Try direct fetch first, fallback to CORS proxy if needed
+                    let response;
+                    try {
+                        response = await fetch(this.apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'accept': '*/*',
+                                'content-type': 'application/json',
+                            },
+                            body: JSON.stringify(payload),
+                            mode: 'cors',
+                            credentials: 'include'
+                        });
+                    } catch (corsError) {
+                        // CORS blocked - try with proxy
+                        response = await fetch(this.getCorsProxyUrl(this.apiUrl), {
+                            method: 'POST',
+                            headers: {
+                                'accept': '*/*',
+                                'content-type': 'application/json',
+                            },
+                            body: JSON.stringify(payload),
+                        });
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    // Update current directory if available
+                    if (result.currentWorkingDirectory) {
+                        this.currentDirectory = result.currentWorkingDirectory;
+                        this.updatePrompt();
+                    }
+
+                    return result;
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.message,
+                        output: null
+                    };
+                }
+            }
+
+            async executeCommand(command) {
+                command = command.trim();
+                
+                if (!command) return;
+                if (this.isExecuting) return;
+
+                // Add to history
+                this.commandHistory.push(command);
+                this.historyIndex = this.commandHistory.length;
+
+                // Print command
+                this.appendOutput(`${this.inputPrompt.textContent}${command}\n`, 'terminal-command');
+                this.terminalInput.value = '';
+
+                // Handle built-in commands
+                if (command === 'clear') {
+                    this.terminalOutput.innerHTML = '';
+                    return;
+                } else if (command === 'help') {
+                    this.showHelp();
+                    return;
+                } else if (command === 'exit' || command === 'quit') {
+                    this.disconnect();
+                    return;
+                }
+
+                // Execute remote command
+                this.isExecuting = true;
+                this.terminalInput.disabled = true;
+
+                const result = await this.sendCommand(command);
+
+                if (result.success) {
+                    if (result.output) {
+                        this.appendOutput(result.output, 'terminal-result');
+                    }
+                    if (result.exitCode !== 0) {
+                        this.appendOutput(`Exit code: ${result.exitCode}\n`, 'terminal-error');
+                    }
+                } else {
+                    this.appendOutput(`Error: ${result.error}\n`, 'terminal-error');
+                }
+
+                this.isExecuting = false;
+                this.terminalInput.disabled = false;
+                this.terminalInput.focus();
+                this.scrollToBottom();
+            }
+
+            showHelp() {
+                const help = `Available Commands:
+  clear     - Clear the terminal screen
+  help      - Show this help message
+  exit/quit - Disconnect from terminal
+
+All other commands are executed in the remote sandbox.
+
+`;
+                this.appendOutput(help, 'terminal-result');
+            }
+
+            appendOutput(text, className = '') {
+                const span = document.createElement('span');
+                span.textContent = text;
+                if (className) {
+                    span.className = className;
+                }
+                this.terminalOutput.appendChild(span);
+            }
+
+            updatePrompt() {
+                const dir = this.currentDirectory === '.' ? '~' : this.currentDirectory;
+                this.currentDirDisplay.textContent = dir;
+                const username = 'user';
+                const hostname = 'blackbox';
+                this.inputPrompt.textContent = `${username}@${hostname}:${dir}$ `;
+            }
+
+            navigateHistory(direction) {
+                if (this.commandHistory.length === 0) return;
+
+                this.historyIndex += direction;
+
+                if (this.historyIndex < 0) {
+                    this.historyIndex = 0;
+                } else if (this.historyIndex >= this.commandHistory.length) {
+                    this.historyIndex = this.commandHistory.length;
+                    this.terminalInput.value = '';
+                    return;
+                }
+
+                this.terminalInput.value = this.commandHistory[this.historyIndex] || '';
+            }
+
+            scrollToBottom() {
+                const terminalBody = document.getElementById('terminalBody');
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+            }
+
+            showStatus(message, type) {
+                this.statusMessage.textContent = message;
+                this.statusMessage.className = `status ${type}`;
+            }
+        }
+
+        // Initialize terminal on page load
+        const terminal = new BlackboxTerminal();
+    </script>
+</body>
+</html>
